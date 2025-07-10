@@ -1,18 +1,18 @@
 package org.example;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
 
 public class Main {
 
     private static final List<String> HANGMAN_VIEW = new ArrayList<>();
-    private static final String[] VOCABLUARY = {
-            "карета"
-/*            "пирожок",
-            "гитара",
-            "ежевика",
-            "сумерки",
-            "фонарик"*/
-    };
+
+    private static final List<String> DICTIONARY = new ArrayList<>();
+
+    private static final String DICTIONARY_PATH = "src/main/resources/dictionary.txt";
+    private static final int MAX_WORDS = 1000;
 
     private static final int ERRORS_MAX = 6;
 
@@ -92,9 +92,36 @@ public class Main {
         return HANGMAN_VIEW;
     }
 
+    private static boolean isCyrillicLetter(Character c) {
+        return (c >= 'а' && c <= 'я') || c == 'ё';
+    }
+
+    private static boolean isWordValid(String line) {
+        line = line.trim().toLowerCase();
+        return line.chars()
+                .allMatch(c -> isCyrillicLetter((char) c));
+    }
+
+    private static void loadWords() {
+        try (BufferedReader buff = new BufferedReader(new FileReader(DICTIONARY_PATH))) {
+            String line;
+            while ((line = buff.readLine()) != null && DICTIONARY.size() < MAX_WORDS) {
+                if (isWordValid(line)) {
+                    DICTIONARY.add(line);
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Не найден файл dictionary (словаря) по уазанному пути");
+            e.printStackTrace();
+        }
+    }
+
     private static String pickARanDomWorld() {
+        if (DICTIONARY.isEmpty()) {
+            throw new IllegalStateException("Словарь пуст");
+        }
         Random random = new Random();
-        return VOCABLUARY[random.nextInt(VOCABLUARY.length)];
+        return DICTIONARY.get(random.nextInt(DICTIONARY.size()));
     }
 
     private static void printHangman(int errors) {
@@ -194,6 +221,7 @@ public class Main {
 
     public static void main(String[] args) {
         initHangmanStages();
+        loadWords();
         boolean continueGame;
         Scanner scanner = new Scanner(System.in);
 
