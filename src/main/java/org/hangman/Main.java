@@ -1,9 +1,10 @@
-package org.example;
+package org.hangman;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Main {
 
@@ -16,8 +17,9 @@ public class Main {
 
     private static final int ERRORS_MAX = 6;
 
-
-    private static List<String> initHangmanStages() {
+    private static final Scanner scanner = new Scanner(System.in);
+    
+    private static void initHangmanStages() {
 
         HANGMAN_VIEW.add("""
                   +---+
@@ -88,8 +90,6 @@ public class Main {
                       |
                 =========
                 """);
-
-        return HANGMAN_VIEW;
     }
 
     private static boolean isCyrillicLetter(Character c) {
@@ -111,7 +111,7 @@ public class Main {
                 }
             }
         } catch (IOException e) {
-            System.out.println("Не найден файл dictionary (словаря) по уазанному пути");
+            System.out.println("Не найден файл dictionary (словаря) по указанному пути");
             e.printStackTrace();
         }
     }
@@ -160,23 +160,31 @@ public class Main {
         return sb;
     }
 
+    private static char getGuessedChar() {
+        String word;
+        do {
+            System.out.println("Нужно загадать одну русскую букву");
+            word = scanner.nextLine().trim().toLowerCase();
+            if (word.length() == 1 && isCyrillicLetter(word.charAt(0))) {
+                return word.charAt(0);
+            }
+            System.out.println("Некорректный ввод. Введите ОДНУ русскую букву.");
+        } while (true);
+    }
+
     private static void hangmanEngine() {
         String word = pickARanDomWorld();
         int errors = 0;
-        Set<Character> uniqueLetters = new HashSet<>();
-        for (char c : word.toCharArray()) {
-            uniqueLetters.add(c);
-        }
+        Set<Character> uniqueLetters = word.chars()
+                .mapToObj(c -> (char) c)
+                .collect(Collectors.toSet());
 
         Set<Character> goodLetters = new HashSet<>();
         Set<Character> badLetters = new HashSet<>();
-        Scanner scanner = new Scanner(System.in);
-
-        Character guessedChar = '1';
 
         String emptyWordWithPlaceholders = String.valueOf(initEmptyWord(word));
 
-        while (errors < ERRORS_MAX && isWordFullyGuessed(word, goodLetters)) {
+        while (errors < ERRORS_MAX && !isWordFullyGuessed(word, goodLetters)) {
             printHangman(errors);
 
             if (goodLetters.isEmpty()) {
@@ -193,11 +201,14 @@ public class Main {
                 System.out.println();
             }
 
-            System.out.println("нужно загадать букву");
-            if (scanner.hasNext()) {
-                guessedChar = scanner.next().charAt(0);
+            char guessedChar = getGuessedChar();
+
+            if (goodLetters.contains(guessedChar) || badLetters.contains(guessedChar)) {
+                System.out.println("Вы уже называли эту букву. Попробуйте другую.");
+                continue;
             }
-            System.out.println("загаданная буква: " + guessedChar);
+
+            System.out.println("Загаданная буква: " + guessedChar);
 
             if (uniqueLetters.contains(guessedChar)) {
                 goodLetters.add(guessedChar);
@@ -219,11 +230,34 @@ public class Main {
         return buildRevealedWord(word, goodLetters).toString().replace(" ", "").equals(word);
     }
 
+    private static void printGameIntro() {
+        System.out.println("""
+            Привет! Добро пожаловать в игру "Виселица".
+
+            Задача:
+            Я загадаю одно слово — имя существительное на русском языке в именительном падеже.
+            Ты будешь пытаться угадать его по буквам.
+
+            Правила:
+            - Вводи по одной русской букве за попытку.
+            - Если буква есть в слове — она откроется на всех позициях.
+            - Если буквы в слове нет — ты получишь штраф (ошибку).
+            - Всего допускается не более 6 ошибок.
+            - Повторный ввод уже названной буквы не засчитывается как ошибка.
+
+            Цель:
+            Угадать всё слово до того, как человечек будет "повешен".
+
+            Удачи! Начинаем игру.
+            """);
+    }
+
     public static void main(String[] args) {
         initHangmanStages();
         loadWords();
+        printGameIntro();
+
         boolean continueGame;
-        Scanner scanner = new Scanner(System.in);
 
         do {
             hangmanEngine();
@@ -231,6 +265,8 @@ public class Main {
             String answer = scanner.nextLine().trim();
             continueGame = answer.equalsIgnoreCase("д");
         } while (continueGame);
+
+        scanner.close();
     }
 
 }
