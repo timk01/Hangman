@@ -9,45 +9,48 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Scanner;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hangman.View.initHangmanStages;
 
 class RoundTest {
 
-/*    @Test
-    @DisplayName("Когда слово полностью отгадано — возвращается true")
-    void whenWordFullyGuessedThenReturnTrue() throws Exception {
-        // Создаём словарь с одним словом "мама"
-        Path tempDict = Files.createTempFile("dictionary", ".txt");
-        Files.writeString(tempDict, "мама");
-        Dictionary.loadWords(tempDict.toString());
-
-        // Буквы: м, а → достаточно чтобы отгадать всё слово
-        String input = String.join("\n", "м", "а");
-        Scanner scanner = new Scanner(new ByteArrayInputStream(input.getBytes()));
-
-        boolean result = Round.hangmanEngine(scanner);
-
-        assertThat(result).isTrue();
-    }*/
+    private static final String WORD = "мама";
+    private Scanner scanner;
 
     @BeforeAll
     static void setUpDictionary() throws Exception {
         initHangmanStages();
         Path tempDict = Files.createTempFile("dictionary", ".txt");
-        Files.writeString(tempDict, "мама");
+        Files.writeString(tempDict, WORD);
         Dictionary.loadWords(tempDict.toString());
+    }
+
+    private Scanner buildScannerFromLines(String... lines) {
+        String input = String.join("\n", lines);
+        return new Scanner(new ByteArrayInputStream(input.getBytes()));
     }
 
     @Test
     @DisplayName("Когда слово полностью отгадано — возвращается true")
     void whenWordFullyGuessedThenReturnTrue() {
-        String input = String.join("\n", "м", "а", "а");
-        Scanner scanner = new Scanner(new ByteArrayInputStream(input.getBytes()));
-
+        scanner = buildScannerFromLines("м", "а");
         boolean result = Round.hangmanEngine(scanner);
-
         assertThat(result).isTrue();
     }
 
+    @Test
+    @DisplayName("Когда превышен лимит ошибок — возвращается false")
+    void whenTooManyErrorsThenReturnFalse() {
+        scanner = buildScannerFromLines("б", "в", "г", "д", "е", "ж", "з");
+        boolean result = Round.hangmanEngine(scanner);
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    @DisplayName("Повторный ввод правильной буквы не влияет на результат")
+    void whenRepeatCorrectLetterThenStillWin() {
+        scanner = buildScannerFromLines("м", "м", "а", "а");
+        boolean result = Round.hangmanEngine(scanner);
+        assertThat(result).isTrue();
+    }
 }
