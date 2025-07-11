@@ -11,32 +11,30 @@ public class Game {
 
     private static final String DICTIONARY_PATH = "src/main/resources/dictionary.txt";
 
-    public static boolean checkFinalAnswer(Scanner scanner) {
+    public static boolean askToStartNewGame(Scanner scanner) {
         while (true) {
-            System.out.println("Хотите сыграть еще? Введите 'д' для продолжения или 'н' для выхода.");
-            String word = scanner.nextLine().trim().toLowerCase();
-            if (word.equals("д")) {
+            System.out.println("Начать новую игру? Введите 'д' для начала или 'н' для выхода.");
+            String input = scanner.nextLine().trim().toLowerCase();
+            if (input.equals("д")) {
                 return true;
-            } else if (word.equals("н")) {
+            } else if (input.equals("н")) {
                 return false;
+            } else {
+                System.out.println("Некорректный ввод. Пожалуйста, введите 'д' или 'н'.");
             }
-            System.out.println("Некорректный ввод. Пожалуйста, введите 'д' или 'н'.");
         }
     }
 
     public static void main(String[] args) {
-        initHangmanStages();
-        loadWords(DICTIONARY_PATH);
-        printGameIntro();
-
-        boolean continueGame = false;
         Scanner scanner = new Scanner(System.in);
+        System.out.println("Добро пожаловать в игру 'Виселица'!");
 
-        do {
-            if (hangmanEngine(scanner)) {
-                continueGame = checkFinalAnswer(scanner);
-            }
-        } while (continueGame);
+        while (askToStartNewGame(scanner)) {
+            initHangmanStages();
+            loadWords(DICTIONARY_PATH);
+            printGameIntro();
+            hangmanEngine(scanner);
+        }
 
         scanner.close();
     }

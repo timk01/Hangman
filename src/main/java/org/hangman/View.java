@@ -86,7 +86,6 @@ public class View {
 
     public static void printGameIntro() {
         System.out.println("""
-                Привет! Добро пожаловать в игру "Виселица".
 
                 Задача:
                 Я загадаю одно слово — имя существительное на русском языке в именительном падеже.
