@@ -5,7 +5,6 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.hangman.Dictionary.getARandomWord;
 import static org.hangman.WordUtils.*;
 
 public class Round {
@@ -24,8 +23,8 @@ public class Round {
         } while (true);
     }
 
-
-    public static boolean hangmanEngine(Scanner scanner) {
+    //что-то меня тут смущает.... большой код - сложночитабельный метод ?
+    public boolean hangmanEngine(Scanner scanner) {
         String word = getARandomWord();
         int errors = 0;
         Set<Character> uniqueLetters = word.chars()
@@ -71,6 +70,10 @@ public class Round {
             }
         }
 
+        return isWin(word, goodLetters, errors);
+    }
+
+    private boolean isWin(String word, Set<Character> goodLetters, int errors) {
         boolean result;
         if (isWordFullyGuessed(word, goodLetters)) {
             System.out.println("Поздравляем! Вы угадали слово: " + word);
@@ -80,7 +83,6 @@ public class Round {
             System.out.println("Вы проиграли. Было загадано слово: " + word);
             result = false;
         }
-
         return result;
     }
 

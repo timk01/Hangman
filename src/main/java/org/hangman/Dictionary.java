@@ -9,16 +9,21 @@ import java.util.Random;
 
 public class Dictionary {
 
-    private static final List<String> DICTIONARY = new ArrayList<>();
+    private List<String> dictionary = new ArrayList<>();
+    private String path;
+    private int maxWords = 1000;
 
-    private static final int MAX_WORDS = 1000;
+    public Dictionary(String path, int maxWords) {
+        this.path = path;
+        this.maxWords = maxWords;
+    }
 
-    public static void loadWords(String path) {
+    public void loadWords() {
         try (BufferedReader buff = new BufferedReader(new FileReader(path))) {
             String line;
-            while ((line = buff.readLine()) != null && DICTIONARY.size() < MAX_WORDS) {
+            while ((line = buff.readLine()) != null && dictionary.size() < maxWords) {
                 if (Validator.isWordValid(line)) {
-                    DICTIONARY.add(line);
+                    dictionary.add(line);
                 }
             }
         } catch (IOException e) {
@@ -27,16 +32,16 @@ public class Dictionary {
         }
     }
 
-    private static String pickRandomWord() {
-        if (DICTIONARY.isEmpty()) {
+    public String getARandomWord() {
+        return pickRandomWord();
+    }
+
+    private String pickRandomWord() {
+        if (dictionary.isEmpty()) {
             throw new IllegalStateException("Словарь пуст");
         }
         Random random = new Random();
-        return DICTIONARY.get(random.nextInt(DICTIONARY.size()));
-    }
-
-    public static String getARandomWord() {
-        return pickRandomWord();
+        return dictionary.get(random.nextInt(dictionary.size()));
     }
 
 }
