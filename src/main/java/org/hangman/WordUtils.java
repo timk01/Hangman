@@ -18,12 +18,12 @@ public class WordUtils {
     }
 
     public static StringBuilder buildRevealedWord(
-            String initialWord, Set<Character> lettersToReplace) {
+            String initialWord, Set<Character> goodLettersForReplacement) {
         StringBuilder sb = new StringBuilder();
 
         for (int i = 0; i < initialWord.length(); i++) {
             char c = initialWord.charAt(i);
-            if (lettersToReplace.contains(c)) {
+            if (goodLettersForReplacement.contains(c)) {
                 sb.append(c);
             } else {
                 sb.append("_");

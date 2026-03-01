@@ -1,56 +1,75 @@
 package org.hangman;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mockito;
 
-import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Scanner;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hangman.View.initHangmanStages;
+import static org.mockito.Mockito.when;
 
 class RoundTest {
 
     private static final String WORD = "мама";
-    private Scanner scanner;
+    private Dictionary dictionary;
+    private View view;
 
-    @BeforeAll
-    static void setUpDictionary() throws Exception {
-        initHangmanStages();
-        Path tempDict = Files.createTempFile("dictionary", ".txt");
-        Files.writeString(tempDict, WORD);
-        Dictionary.loadWords(tempDict.toString());
-    }
+    @BeforeEach
+    void setUp(@TempDir Path tempDir) throws Exception {
+        Path dictFile = tempDir.resolve("dictionary.txt");
+        Files.writeString(dictFile, WORD, StandardCharsets.UTF_8);
 
-    private Scanner buildScannerFromLines(String... lines) {
-        String input = String.join("\n", lines);
-        return new Scanner(new ByteArrayInputStream(input.getBytes()));
+        dictionary = new Dictionary(dictFile.toString(), 1000);
+        dictionary.loadWords();
+
+        view = new View();
     }
 
     @Test
-    @DisplayName("Когда слово полностью отгадано — возвращается true")
     void whenWordFullyGuessedThenReturnTrue() {
-        scanner = buildScannerFromLines("м", "а");
-        boolean result = Round.hangmanEngine(scanner);
+        Input input = Mockito.mock(Input.class);
+        when(input.getGuessedChar()).thenReturn('м', 'а');
+
+        Round round = new Round(6, input, dictionary, view);
+
+        boolean result = round.hangmanEngine();
         assertThat(result).isTrue();
     }
 
     @Test
-    @DisplayName("Когда превышен лимит ошибок — возвращается false")
     void whenTooManyErrorsThenReturnFalse() {
-        scanner = buildScannerFromLines("б", "в", "г", "д", "е", "ж", "з");
-        boolean result = Round.hangmanEngine(scanner);
+        Input input = Mockito.mock(Input.class);
+        when(input.getGuessedChar()).thenReturn('б', 'в', 'г', 'д', 'е', 'ж', 'з');
+
+        Round round = new Round(6, input, dictionary, view);
+
+        boolean result = round.hangmanEngine();
         assertThat(result).isFalse();
     }
 
     @Test
-    @DisplayName("Повторный ввод правильной буквы не влияет на результат")
     void whenRepeatCorrectLetterThenStillWin() {
-        scanner = buildScannerFromLines("м", "м", "а", "а");
-        boolean result = Round.hangmanEngine(scanner);
+        Input input = Mockito.mock(Input.class);
+        when(input.getGuessedChar()).thenReturn('м', 'м', 'а', 'а');
+
+        Round round = new Round(6, input, dictionary, view);
+
+        boolean result = round.hangmanEngine();
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void whenRepeatWrongLetterThenStillWin() {
+        Input input = Mockito.mock(Input.class);
+        when(input.getGuessedChar()).thenReturn('б', 'б', 'м', 'а');
+
+        Round round = new Round(2, input, dictionary, view);
+
+        boolean result = round.hangmanEngine();
         assertThat(result).isTrue();
     }
 }

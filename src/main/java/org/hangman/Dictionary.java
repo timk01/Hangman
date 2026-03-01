@@ -3,15 +3,16 @@ package org.hangman;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 public class Dictionary {
 
-    private List<String> dictionary = new ArrayList<>();
-    private String path;
-    private int maxWords = 1000;
+    private final List<String> dictionary = new ArrayList<>();
+    private final String path;
+    private final int maxWords;
 
     public Dictionary(String path, int maxWords) {
         this.path = path;
@@ -27,8 +28,7 @@ public class Dictionary {
                 }
             }
         } catch (IOException e) {
-            System.out.println("Не найден файл dictionary (словаря) по указанному пути");
-            e.printStackTrace();
+            throw new UncheckedIOException("Не найден файл dictionary (словаря) по указанному пути", e);
         }
     }
 

@@ -1,7 +1,6 @@
 package org.hangman;
 
 import java.util.HashSet;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -9,81 +8,83 @@ import static org.hangman.WordUtils.*;
 
 public class Round {
 
-    private static final int ERRORS_MAX = 6;
+    private final int maxErrors;
+    private final Input input;
+    private final Dictionary dictionary;
+    private final View view;
 
-    private static char getGuessedChar(Scanner scanner) {
-        String word;
-        do {
-            System.out.println("Нужно загадать одну русскую букву");
-            word = scanner.nextLine().trim().toLowerCase();
-            if (word.length() == 1 && Validator.isCyrillicLetter(word.charAt(0))) {
-                return word.charAt(0);
-            }
-            System.out.println("Некорректный ввод. Введите ОДНУ русскую букву.");
-        } while (true);
+    public Round(int maxErrors, Input input, Dictionary dictionary, View view) {
+        this.maxErrors = maxErrors;
+        this.input = input;
+        this.dictionary = dictionary;
+        this.view = view;
     }
 
-    //что-то меня тут смущает.... большой код - сложночитабельный метод ?
-    public boolean hangmanEngine(Scanner scanner) {
-        String word = getARandomWord();
-        int errors = 0;
-        Set<Character> uniqueLetters = word.chars()
-                .mapToObj(c -> (char) c)
-                .collect(Collectors.toSet());
+    public boolean hangmanEngine() {
+        String word = dictionary.getARandomWord();
+
+        Set<Character> uniqueWordLetters = extractUniqueLetters(word);
 
         Set<Character> goodLetters = new HashSet<>();
         Set<Character> badLetters = new HashSet<>();
 
         String emptyWordWithPlaceholders = String.valueOf(initEmptyWord(word));
 
-        while (errors < ERRORS_MAX && !isWordFullyGuessed(word, goodLetters)) {
-            System.out.println(View.getHangmanStage(errors));
+        int roundErrors = progressRoundLoop(word, goodLetters,
+                emptyWordWithPlaceholders, badLetters, uniqueWordLetters);
+
+        return finishRound(word, goodLetters, roundErrors);
+    }
+
+    private Set<Character> extractUniqueLetters(String word) {
+        return word.chars()
+                .mapToObj(c -> (char) c)
+                .collect(Collectors.toSet());
+    }
+
+    private int progressRoundLoop(String word, Set<Character> goodLetters, String emptyWordWithPlaceholders, Set<Character> badLetters, Set<Character> uniqueWordLetters) {
+        int roundErrors = 0;
+        while (roundErrors < maxErrors && !isWordFullyGuessed(word, goodLetters)) {
+            view.printStage(roundErrors);
 
             if (goodLetters.isEmpty()) {
-                System.out.println(emptyWordWithPlaceholders);
+                view.printCurrentWordState(emptyWordWithPlaceholders);
             } else {
-                System.out.println(buildRevealedWord(word, goodLetters));
+                view.printCurrentWordState(buildRevealedWord(word, goodLetters).toString());
             }
 
-            System.out.print("Ошибки (" + errors + "): ");
+            view.printErrors(roundErrors, badLetters);
 
-            if (!badLetters.isEmpty()) {
-                System.out.println(badLetters);
-            } else {
-                System.out.println();
-            }
-
-            char guessedChar = getGuessedChar(scanner);
+            char guessedChar = input.getGuessedChar();
 
             if (goodLetters.contains(guessedChar) || badLetters.contains(guessedChar)) {
-                System.out.println("Вы уже называли эту букву. Попробуйте другую.");
+                view.printMessage("Вы уже называли эту букву. Попробуйте другую.");
                 continue;
             }
 
-            System.out.println("Загаданная буква: " + guessedChar);
+            view.printMessage("Загаданная буква: " + guessedChar);
 
-            if (uniqueLetters.contains(guessedChar)) {
+            if (uniqueWordLetters.contains(guessedChar)) {
                 goodLetters.add(guessedChar);
             } else {
                 badLetters.add(guessedChar);
-                errors++;
+                roundErrors++;
             }
         }
-
-        return isWin(word, goodLetters, errors);
+        return roundErrors;
     }
 
-    private boolean isWin(String word, Set<Character> goodLetters, int errors) {
-        boolean result;
-        if (isWordFullyGuessed(word, goodLetters)) {
-            System.out.println("Поздравляем! Вы угадали слово: " + word);
-            result = true;
-        } else {
-            System.out.println(View.getHangmanStage(errors));
-            System.out.println("Вы проиграли. Было загадано слово: " + word);
-            result = false;
+    private boolean finishRound(String word, Set<Character> goodLetters, int roundErrors) {
+        boolean roundResult = isWin(word, goodLetters);
+        if (!roundResult) {
+            view.printStage(roundErrors);
         }
-        return result;
+        view.printRoundResult(word, roundResult);
+        return roundResult;
+    }
+
+    private boolean isWin(String word, Set<Character> goodLetters) {
+        return isWordFullyGuessed(word, goodLetters);
     }
 
 }

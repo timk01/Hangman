@@ -8,20 +8,20 @@ public class Game {
         View view = new View();
         view.greetings();
 
-        Scanner scanner = new Scanner(System.in);
-        Input userInput = new UserInput(scanner);
-
         String path = "src/main/resources/dictionary.txt";
         int maxWords = 1000;
         Dictionary dictionary = new Dictionary(path, maxWords);
         dictionary.loadWords();
 
-        Round round = new Round();
+        Scanner scanner = new Scanner(System.in);
+        Input input = new UserInput(scanner);
 
-        while (userInput.userDialogue()) {
-            view.initHangmanStages();
-            view.printGameIntro();
-            round.hangmanEngine(scanner);
+        int maxErrors = 6;
+        Round round = new Round(maxErrors, input, dictionary, view);
+
+        while (input.askToPlay()) {
+            view.printGameIntro(maxErrors);
+            round.hangmanEngine();
         }
 
         scanner.close();
